@@ -1,18 +1,28 @@
-# 643. Maximum Average Subarray I
+# Maximum Average Subarray I
 
-[View the problem on LeetCode](https://leetcode.com/problems/maximum-average-subarray-i/)
+This is [LeetCode 643: Maximum Average Subarray I](https://leetcode.com/problems/maximum-average-subarray-i/).
 
-## Problem
+Given an array `nums` and a number `k`, the goal is to find the highest average among all groups of exactly `k` consecutive elements.
 
-Given an integer array `nums` and an integer `k`, find the largest average among all groups of exactly `k` consecutive elements.
+## My approach
 
-The array has between 1 and 100,000 elements, `k` is between 1 and the length of the array, and each element is between −10,000 and 10,000. The answer is accepted if its absolute error is less than 10⁻⁵.
+I use a fixed-size sliding window. Every window has the same number of elements, so the biggest sum also gives me the biggest average. I keep track of the best sum and divide by `k` once at the end.
 
-## Solution
+## Building the first window
 
-Every window has the same length, so the window with the largest sum also has the largest average. We can keep track of the largest sum and divide by `k` at the end.
+At each index, I add the new element with `currentSum += nums[i]`. With `k = 4`, the first full window covers indices `0` through `3`. That's why I only compare sums once `i` reaches `k - 1`.
 
-The loop adds `nums[i]` to the running sum on every iteration. Once the window is full, adding a new element means the leftmost element has to leave. This is the part of the code that removes it.
+```cpp
+if (i >= k - 1) {
+    maxSum = max(maxSum, currentSum);
+}
+```
+
+I start `maxSum` at `INT_MIN` so a negative sum can still become the best one. Starting at `0` would give me the wrong answer if every window had a negative sum.
+
+## Moving the window
+
+Once I have a full window, adding a new element means one has to leave. I already have the previous window's sum, so I can reuse it by adding the new rightmost element and subtracting the old leftmost one.
 
 ```cpp
 if (i >= k) {
@@ -20,19 +30,16 @@ if (i >= k) {
 }
 ```
 
-For example, when `k = 4` and `i = 4`, the new window covers indices 1 through 4. The element at index `i - k`, which is `0`, is the one that leaves.
+Here's how I get **`i - k`**. The new window ends at `i`, so its first index is `i - k + 1`. The element I need to remove is one spot before that, at `i - k`.
 
-The check `i >= k - 1` controls when the sum counts toward the answer. With `k = 4`, the first complete window ends at index 3. The first removal happens one iteration later, at index 4.
+For example, with `[1, 12, -5, -6, 50, 3]` and `k = 4`, the first window is `[1, 12, -5, -6]` and its sum is `2`.
 
-## Example
+When `i` reaches `4`, `50` comes in. The new window starts at index `1`, so the `1` at index `0` leaves. The new sum is `2 + 50 - 1 = 51`. On the next slide, `3` comes in and `12` leaves, giving me `51 + 3 - 12 = 42`.
 
-With `[1, 12, -5, -6, 50, 3]` and `k = 4`, the first window has a sum of 2. When 50 enters and 1 leaves, the sum becomes 51. On the next slide, 3 enters and 12 leaves, so the sum drops to 42. The largest sum is 51, which gives an average of 12.75.
+The best sum is `51`, so the answer is `51 / 4 = 12.75`. I use `static_cast<double>(maxSum) / k` to keep the decimal part.
 
-## Complexity Analysis
+## Sliding window takeaway
 
-- **Time complexity `O(n)`**. The algorithm makes one pass through the array and updates the sum in constant time at each step.
-- **Auxiliary space `O(1)`**. The algorithm uses a fixed number of variables and does not store a separate copy of the window.
+When I see **exactly `k` consecutive elements**, I check what changes when the window moves one spot. Here, `k - 1` elements stay the same, so I only have to account for the one coming in and the one going out.
 
-## Takeaway
-
-When a problem asks about exactly `k` consecutive elements, check whether you can reuse the previous window's result. Here, adding the incoming element and subtracting the outgoing one gives you the next sum without adding up all `k` elements again.
+Time complexity is `O(n)` because I make one pass through the array. Extra space is `O(1)` because I only store a few variables.
